@@ -95,6 +95,8 @@ pub struct ChessApp {
     last_black: Color32,
     last_white: Color32,
     flip: bool,
+    black_depth: usize,
+    white_depth: usize,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum AppType {
@@ -154,6 +156,8 @@ impl ChessApp {
             last_black: Color32::from_rgb(25, 25, 25),
             last_white: Color32::from_rgb(200, 200, 200),
             flip: true,
+            white_depth: 3,
+            black_depth: 3,
         }
     }
 
@@ -198,15 +202,13 @@ impl ChessApp {
                 ui.separator();
                 ui.selectable_value(
                     &mut self.black,
-                    Player::Computer(Computer::Minimax(3)),
-                    "Computer minimax 3",
+                    Player::Computer(Computer::Minimax(self.black_depth)),
+                    format!("Computer minimax {}", self.black_depth),
                 );
-                ui.separator();
-                ui.selectable_value(
-                    &mut self.black,
-                    Player::Computer(Computer::Minimax(5)),
-                    "Computer minimax 5",
-                );
+                if let Player::Computer(Computer::Minimax(_)) = self.black {
+                    ui.add(egui::Slider::new(&mut self.black_depth, 1..=100).show_value(false));
+                }
+
             });
         egui::ComboBox::from_id_source("white")
             .selected_text("White: mode")
@@ -233,15 +235,13 @@ impl ChessApp {
                 ui.separator();
                 ui.selectable_value(
                     &mut self.white,
-                    Player::Computer(Computer::Minimax(3)),
-                    "Computer minimax 3",
+                    Player::Computer(Computer::Minimax(self.white_depth)),
+                    format!("Computer minimax {}", self.white_depth),
                 );
-                ui.separator();
-                ui.selectable_value(
-                    &mut self.white,
-                    Player::Computer(Computer::Minimax(5)),
-                    "Computer minimax 5",
-                );
+                if let Player::Computer(Computer::Minimax(_)) = self.white {
+                    ui.add(egui::Slider::new(&mut self.white_depth, 1..=100).show_value(false));
+                    
+                }
             });
     }
 
@@ -285,7 +285,16 @@ impl eframe::App for ChessApp {
                 });
         }
 
+
         ctx.request_repaint();
+        // check if black ai is in minimax if it is then set to its depth to self.black_depth
+        if let Player::Computer(Computer::Minimax(_)) = self.black {
+            self.black = Player::Computer(Computer::Minimax(self.black_depth));
+        }
+        // check if white ai is in minimax if it is then set to its depth to self.white_depth
+        if let Player::Computer(Computer::Minimax(_)) = self.white {
+            self.white = Player::Computer(Computer::Minimax(self.white_depth));
+        }
         let moves = if let Some((pos, piece)) = self.current_piece {
             self.moves
                 .iter()
@@ -764,7 +773,9 @@ pub fn threads(
                     Computer::Random => random_move(&gamestate),
                     Computer::RandomCapture => random_capture(&gamestate),
                     Computer::RandomMaximizeCapture => random_maximize_capture(&gamestate),
-                    Computer::Minimax(depth) => minimax(&gamestate, depth),
+                    Computer::Minimax(depth) => {
+                        println!("color {color:?} depth {}", depth);
+                        minimax(&gamestate, depth)},
                 };
                 println!("doing move");
                 {

@@ -11,5 +11,3 @@ yea_fen = {git = "https://github.com/mendelsshop/yea_fen.git", rev = "4863441832
 eframe = {version = "0.20.1",default_features = false, features = ["dark-light", "glow", "default_fonts"]}
 egui_extras = {version = "0.20", features = ["image"]}
 image = { version = "0.24.5", default-features = false, features = ["png"] }
-# iced = "0.6.0"
-# druid = "0.7.0"
