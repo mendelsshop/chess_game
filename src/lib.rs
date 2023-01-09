@@ -206,7 +206,7 @@ impl ChessApp {
                     format!("Computer minimax {}", self.black_depth),
                 );
                 if let Player::Computer(Computer::Minimax(_)) = self.black {
-                    ui.add(egui::Slider::new(&mut self.black_depth, 1..=100).show_value(false));
+                    ui.add(egui::Slider::new(&mut self.black_depth, 1..=50).show_value(false).step_by(1.));
                 }
 
             });
@@ -239,7 +239,7 @@ impl ChessApp {
                     format!("Computer minimax {}", self.white_depth),
                 );
                 if let Player::Computer(Computer::Minimax(_)) = self.white {
-                    ui.add(egui::Slider::new(&mut self.white_depth, 1..=100).show_value(false));
+                    ui.add(egui::Slider::new(&mut self.white_depth, 1..=50).show_value(false).step_by(0.5));
                     
                 }
             });
