@@ -446,7 +446,7 @@ impl eframe::App for ChessApp {
                     self.move_todo = None;
                     self.moves = self
                         .gamestate
-                        .get_all_valid_moves(self.gamestate.get_active_color());
+                        .new_all_valid_moves(self.gamestate.get_active_color());
                     self.color = self.gamestate.get_active_color();
                 }
             } else {
@@ -456,7 +456,7 @@ impl eframe::App for ChessApp {
                 self.move_todo = None;
                 self.moves = self
                     .gamestate
-                    .get_all_valid_moves(self.gamestate.get_active_color());
+                    .new_all_valid_moves(self.gamestate.get_active_color());
                 self.color = self.gamestate.get_active_color();
             }
         }
@@ -770,12 +770,12 @@ pub fn threads(
                 let mut gamestate = rc.2;
                 println!("getting move");
                 let r#move = match ai {
-                    Computer::Random => random_move(&gamestate),
-                    Computer::RandomCapture => random_capture(&gamestate),
-                    Computer::RandomMaximizeCapture => random_maximize_capture(&gamestate),
+                    Computer::Random => random_move(&mut gamestate),
+                    Computer::RandomCapture => random_capture(&mut gamestate),
+                    Computer::RandomMaximizeCapture => random_maximize_capture(&mut gamestate),
                     Computer::Minimax(depth) => {
                         println!("color {color:?} depth {}", depth);
-                        minimax(&gamestate, depth)},
+                        minimax(&mut gamestate, depth)},
                 };
                 println!("doing move");
                 {
