@@ -781,6 +781,7 @@ pub fn threads(
                 {
                     if let Some(r#move) = r#move {
                         if gamestate.do_move(r#move.0, r#move.1) {
+                            println!("computer moved {}", r#move.0);
                             let send_c = match color {
                                 Color::Black => Color::White,
                                 Color::White => Color::Black,
@@ -790,9 +791,15 @@ pub fn threads(
                             println!("done");
                             send.send((send_c, moves, gamestate)).unwrap();
                         } else {
+                            for r#move in gamestate.get_past_moves() {
+                                println!("{}", r#move.get_type());
+                            }
                             println!("could not move"); //
                         }
                     } else {
+                        for r#move in gamestate.get_past_moves() {
+                            println!("{}", r#move.get_type());
+                        }
                         println!("could not move");
                     }
                 }
