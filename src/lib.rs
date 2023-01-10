@@ -206,9 +206,12 @@ impl ChessApp {
                     format!("Computer minimax {}", self.black_depth),
                 );
                 if let Player::Computer(Computer::Minimax(_)) = self.black {
-                    ui.add(egui::Slider::new(&mut self.black_depth, 1..=50).show_value(false).step_by(1.));
+                    ui.add(
+                        egui::Slider::new(&mut self.black_depth, 1..=50)
+                            .show_value(false)
+                            .step_by(1.),
+                    );
                 }
-
             });
         egui::ComboBox::from_id_source("white")
             .selected_text("White: mode")
@@ -239,8 +242,11 @@ impl ChessApp {
                     format!("Computer minimax {}", self.white_depth),
                 );
                 if let Player::Computer(Computer::Minimax(_)) = self.white {
-                    ui.add(egui::Slider::new(&mut self.white_depth, 1..=50).show_value(false).step_by(0.5));
-                    
+                    ui.add(
+                        egui::Slider::new(&mut self.white_depth, 1..=50)
+                            .show_value(false)
+                            .step_by(0.5),
+                    );
                 }
             });
     }
@@ -284,7 +290,6 @@ impl eframe::App for ChessApp {
                     }
                 });
         }
-
 
         ctx.request_repaint();
         // check if black ai is in minimax if it is then set to its depth to self.black_depth
@@ -775,7 +780,8 @@ pub fn threads(
                     Computer::RandomMaximizeCapture => random_maximize_capture(&mut gamestate),
                     Computer::Minimax(depth) => {
                         println!("color {color:?} depth {}", depth);
-                        minimax(&mut gamestate, depth)},
+                        minimax(&mut gamestate, depth)
+                    }
                 };
                 println!("doing move");
                 {
