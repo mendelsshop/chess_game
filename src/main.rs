@@ -7,9 +7,9 @@ fn main() {
     let (send, recv) = mpsc::channel();
     let (send1, recv1) = mpsc::channel();
     let native_options = eframe::NativeOptions {
-        initial_window_size: Some(eframe::egui::Vec2::new(770.0, 590.0)),
+        initial_window_size: Some(eframe::egui::Vec2::new(800.0, 600.0)),
         transparent: true,
-        resizable: false,
+        // resizable: false,
         ..Default::default()
     };
     threads(recv, send1);

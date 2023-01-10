@@ -3,7 +3,7 @@
 #![allow(clippy::must_use_candidate)]
 
 use eframe::{
-    egui::{self, Separator, TextEdit, Ui},
+    egui::{self, Separator, TextEdit, Ui, Frame},
     emath::Align,
     epaint::{Color32, Vec2},
 };
@@ -97,6 +97,7 @@ pub struct ChessApp {
     flip: bool,
     black_depth: usize,
     white_depth: usize,
+    
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum AppType {
@@ -665,11 +666,22 @@ impl eframe::App for ChessApp {
             }
         };
 
+        let frame = Frame::none().fill(egui::Color32::TRANSPARENT).outer_margin(
+            egui::vec2(
+                10.0,
+                10.0, 
+            ),
+        
+        );
         match (self.color, self.flip) {
             (Color::Black, true) => {
-                egui::SidePanel::left("chess").show(ctx, |ui| {
+                egui::SidePanel::left("chess")
+                // .frame(frame)
+                .show(ctx, |ui| {
                     for (idx, i) in self.gamestate.get_board().into_iter().rev().enumerate() {
+                        
                         ui.horizontal(|ui| {
+                            ui.label(format!("\n\n{} ",(idx + 1)));
                             for (idxx, p) in i.iter().rev().enumerate() {
                                 let pos = Pos::new(idx as u8 + 1, 8 - (idxx as u8));
                                 // if row is is odd and column is odd or column is even and row is even black else white
@@ -681,17 +693,32 @@ impl eframe::App for ChessApp {
                                     self.white_square
                                 };
 
-                                t(*p, Pos::new(idx as u8 + 1, 8 - (idxx as u8)), ui, color);
+                                // t(*p, Pos::new(idx as u8 + 1, 8 - (idxx as u8)), ui, color);
+                                if idx  == 7 {
+                                    ui.vertical(|ui| {
+                                        t(*p, Pos::new(idx as u8 + 1, 8 - (idxx as u8)), ui, color);
+                                        ui.label(format!("\t \t{}", (8-idxx  as u8 + 96) as char));
+                                    } 
+
+                                    );
+                                } else {
+                                    t(*p, Pos::new(idx as u8 + 1, 8 - (idxx as u8)), ui, color);
+                                }
                             }
                         });
                     }
                 });
             }
             _ => {
-                egui::SidePanel::left("chess").show(ctx, |ui| {
+                egui::SidePanel::left("chess")
+                // .frame(frame)
+                .show(ctx, |ui| {
                     for (idx, i) in self.gamestate.get_board().into_iter().enumerate() {
+                        
                         ui.horizontal(|ui| {
+                            ui.label(format!("\n\n{} ", 8- (idx)));
                             for (idxx, p) in i.iter().enumerate() {
+                                
                                 let pos = Pos::new(idx as u8 + 1, idxx as u8 + 1);
                                 let color = if (pos.get_row() % 2 == 0 && pos.get_column() % 2 == 1)
                                     || (pos.get_row() % 2 == 1 && pos.get_column() % 2 == 0)
@@ -700,7 +727,18 @@ impl eframe::App for ChessApp {
                                 } else {
                                     self.white_square
                                 };
-                                t(*p, Pos::new(8 - (idx as u8), idxx as u8 + 1), ui, color);
+                                if idx == 7 {
+                                    ui.vertical(|ui| {
+                                        t(*p, Pos::new(8 - (idx as u8), idxx as u8 + 1), ui, color);
+                                        ui.label(format!("\t \t{}", (idxx as u8 + 97) as char));
+                                    } 
+
+                                    );
+                                } else {
+                                    t(*p, Pos::new(8 - (idx as u8), idxx as u8 + 1), ui, color);
+                                }
+                                
+                                
                             }
                         });
                     }
@@ -709,6 +747,7 @@ impl eframe::App for ChessApp {
         }
 
         egui::SidePanel::left("ctrl")
+        .frame(frame)
             .resizable(false)
             .show(ctx, |ui| {
                 // game/display toggle
@@ -719,7 +758,7 @@ impl eframe::App for ChessApp {
                         ui.selectable_value(&mut self.mode, AppType::Game, "game");
                     });
                 // fen text input with button to load
-                ui.add(TextEdit::singleline(&mut self.input_fen));
+                ui.add(TextEdit::singleline(&mut self.input_fen).hint_text("fen").code_editor());
                 let resp = ui.button("go");
                 if resp.clicked() {
                     self.gamestate = GameState::from_str(&self.input_fen)
