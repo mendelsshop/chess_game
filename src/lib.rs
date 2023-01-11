@@ -3,7 +3,7 @@
 #![allow(clippy::must_use_candidate)]
 
 use eframe::{
-    egui::{self, Separator, TextEdit, Ui, Frame},
+    egui::{self, Frame, Separator, TextEdit, Ui},
     emath::Align,
     epaint::{Color32, Vec2},
 };
@@ -97,7 +97,6 @@ pub struct ChessApp {
     flip: bool,
     black_depth: usize,
     white_depth: usize,
-    
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum AppType {
@@ -304,7 +303,7 @@ impl eframe::App for ChessApp {
         let moves = if let Some((pos, piece)) = self.current_piece {
             self.moves
                 .iter()
-                .filter(|m| m.from((pos, Some(piece))).is_some())
+                .filter(|m| m.is_from((pos, piece)))
                 .copied()
                 .collect::<HashSet<_>>()
         } else {
@@ -509,7 +508,8 @@ impl eframe::App for ChessApp {
                         .gamestate
                         .get_past_moves()
                         .last()
-                        .map_or(false, |m| m.get_type().to(Some(piece)) == pos);
+                        .map_or(false, |m| m.get_type().to() == pos);
+
                     let tint = if was_last_move {
                         match self
                             .gamestate
@@ -541,7 +541,7 @@ impl eframe::App for ChessApp {
                         }
                         AppType::Game => {
                             let move_type = moves.iter().find(|m| match self.current_piece {
-                                Some((_, piece)) => m.to(Some(piece)) == pos,
+                                Some(_) => m.to() == pos,
                                 None => false,
                             });
                             // if move_type is some then use self.captured_pieces
@@ -582,7 +582,7 @@ impl eframe::App for ChessApp {
                         .gamestate
                         .get_past_moves()
                         .last()
-                        .map_or(false, |m| m.get_type().from((pos, None)) == Some(pos));
+                        .map_or(false, |m| m.get_type().from().0 == pos);
                     let tint = if was_last_move {
                         match self
                             .gamestate
@@ -619,7 +619,7 @@ impl eframe::App for ChessApp {
                             // if there is, then use the move_blank texture
                             // if there is a move from this position, and it is a special move, use the special_move texture
                             let move_type = moves.iter().find(|m| match self.current_piece {
-                                Some((_, piece)) => m.to(Some(piece)) == pos,
+                                Some(_) => m.to() == pos,
                                 None => false,
                             });
                             if let Some(m) = move_type {
@@ -666,88 +666,90 @@ impl eframe::App for ChessApp {
             }
         };
 
-        let frame = Frame::none().fill(egui::Color32::TRANSPARENT).outer_margin(
-            egui::vec2(
-                10.0,
-                10.0, 
-            ),
-        
-        );
+        let frame = Frame::none()
+            .fill(egui::Color32::TRANSPARENT)
+            .outer_margin(egui::vec2(10.0, 10.0));
         match (self.color, self.flip) {
             (Color::Black, true) => {
                 egui::SidePanel::left("chess")
-                // .frame(frame)
-                .show(ctx, |ui| {
-                    for (idx, i) in self.gamestate.get_board().into_iter().rev().enumerate() {
-                        
-                        ui.horizontal(|ui| {
-                            ui.label(format!("\n\n{} ",(idx + 1)));
-                            for (idxx, p) in i.iter().rev().enumerate() {
-                                let pos = Pos::new(idx as u8 + 1, 8 - (idxx as u8));
-                                // if row is is odd and column is odd or column is even and row is even black else white
-                                let color = if (pos.get_row() % 2 == 1 && pos.get_column() % 2 == 1)
-                                    || (pos.get_row() % 2 == 0 && pos.get_column() % 2 == 0)
-                                {
-                                    self.black_square
-                                } else {
-                                    self.white_square
-                                };
+                    // .frame(frame)
+                    .show(ctx, |ui| {
+                        for (idx, i) in self.gamestate.get_board().into_iter().rev().enumerate() {
+                            ui.horizontal(|ui| {
+                                ui.label(format!("\n\n{} ", (idx + 1)));
+                                for (idxx, p) in i.iter().rev().enumerate() {
+                                    let pos = Pos::new(idx as u8 + 1, 8 - (idxx as u8));
+                                    // if row is is odd and column is odd or column is even and row is even black else white
+                                    let color = if (pos.get_row() % 2 == 1
+                                        && pos.get_column() % 2 == 1)
+                                        || (pos.get_row() % 2 == 0 && pos.get_column() % 2 == 0)
+                                    {
+                                        self.black_square
+                                    } else {
+                                        self.white_square
+                                    };
 
-                                // t(*p, Pos::new(idx as u8 + 1, 8 - (idxx as u8)), ui, color);
-                                if idx  == 7 {
-                                    ui.vertical(|ui| {
+                                    // t(*p, Pos::new(idx as u8 + 1, 8 - (idxx as u8)), ui, color);
+                                    if idx == 7 {
+                                        ui.vertical(|ui| {
+                                            t(
+                                                *p,
+                                                Pos::new(idx as u8 + 1, 8 - (idxx as u8)),
+                                                ui,
+                                                color,
+                                            );
+                                            ui.label(format!(
+                                                "\t \t{}",
+                                                (8 - idxx as u8 + 96) as char
+                                            ));
+                                        });
+                                    } else {
                                         t(*p, Pos::new(idx as u8 + 1, 8 - (idxx as u8)), ui, color);
-                                        ui.label(format!("\t \t{}", (8-idxx  as u8 + 96) as char));
-                                    } 
-
-                                    );
-                                } else {
-                                    t(*p, Pos::new(idx as u8 + 1, 8 - (idxx as u8)), ui, color);
+                                    }
                                 }
-                            }
-                        });
-                    }
-                });
+                            });
+                        }
+                    });
             }
             _ => {
                 egui::SidePanel::left("chess")
-                // .frame(frame)
-                .show(ctx, |ui| {
-                    for (idx, i) in self.gamestate.get_board().into_iter().enumerate() {
-                        
-                        ui.horizontal(|ui| {
-                            ui.label(format!("\n\n{} ", 8- (idx)));
-                            for (idxx, p) in i.iter().enumerate() {
-                                
-                                let pos = Pos::new(idx as u8 + 1, idxx as u8 + 1);
-                                let color = if (pos.get_row() % 2 == 0 && pos.get_column() % 2 == 1)
-                                    || (pos.get_row() % 2 == 1 && pos.get_column() % 2 == 0)
-                                {
-                                    self.black_square
-                                } else {
-                                    self.white_square
-                                };
-                                if idx == 7 {
-                                    ui.vertical(|ui| {
+                    // .frame(frame)
+                    .show(ctx, |ui| {
+                        for (idx, i) in self.gamestate.get_board().into_iter().enumerate() {
+                            ui.horizontal(|ui| {
+                                ui.label(format!("\n\n{} ", 8 - (idx)));
+                                for (idxx, p) in i.iter().enumerate() {
+                                    let pos = Pos::new(idx as u8 + 1, idxx as u8 + 1);
+                                    let color = if (pos.get_row() % 2 == 0
+                                        && pos.get_column() % 2 == 1)
+                                        || (pos.get_row() % 2 == 1 && pos.get_column() % 2 == 0)
+                                    {
+                                        self.black_square
+                                    } else {
+                                        self.white_square
+                                    };
+                                    if idx == 7 {
+                                        ui.vertical(|ui| {
+                                            t(
+                                                *p,
+                                                Pos::new(8 - (idx as u8), idxx as u8 + 1),
+                                                ui,
+                                                color,
+                                            );
+                                            ui.label(format!("\t \t{}", (idxx as u8 + 97) as char));
+                                        });
+                                    } else {
                                         t(*p, Pos::new(8 - (idx as u8), idxx as u8 + 1), ui, color);
-                                        ui.label(format!("\t \t{}", (idxx as u8 + 97) as char));
-                                    } 
-
-                                    );
-                                } else {
-                                    t(*p, Pos::new(8 - (idx as u8), idxx as u8 + 1), ui, color);
+                                    }
                                 }
-                                
-                                
-                            }
-                        });
-                    }
-                });
+                            });
+                        }
+                    });
             }
         }
 
         egui::SidePanel::left("ctrl")
-        .frame(frame)
+            .frame(frame)
             .resizable(false)
             .show(ctx, |ui| {
                 // game/display toggle
@@ -758,7 +760,11 @@ impl eframe::App for ChessApp {
                         ui.selectable_value(&mut self.mode, AppType::Game, "game");
                     });
                 // fen text input with button to load
-                ui.add(TextEdit::singleline(&mut self.input_fen).hint_text("fen").code_editor());
+                ui.add(
+                    TextEdit::singleline(&mut self.input_fen)
+                        .hint_text("fen")
+                        .code_editor(),
+                );
                 let resp = ui.button("go");
                 if resp.clicked() {
                     self.gamestate = GameState::from_str(&self.input_fen)
