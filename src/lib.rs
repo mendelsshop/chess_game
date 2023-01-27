@@ -16,7 +16,7 @@ use std::{
     time::Duration,
 };
 use wigets::ImageButton;
-use yea_fen::chess_engines::minimax::minimax;
+use yea_fen::chess_engines::minimax::{negamax};
 pub mod wigets;
 use yea_fen::{
     chess_engines::{
@@ -361,6 +361,9 @@ impl eframe::App for ChessApp {
                                         self.white_color = Color32::WHITE;
                                         self.black_square = Color32::BROWN;
                                         self.white_square = Color32::GOLD;
+                                        self.last_black = Color32::from_rgb(25, 25, 25);
+                                        self.last_white = Color32::from_rgb(200, 200, 200)
+
                                     }
                                     ui.add(Separator::default().horizontal());
                                 });
@@ -394,7 +397,7 @@ impl eframe::App for ChessApp {
                     self.new_game_button(ui, frame);
                 });
             }
-            yea_fen::moves::GameResult::StaleMate | yea_fen::moves::GameResult::Draw => {
+            yea_fen::moves::GameResult::StaleMate | yea_fen::moves::GameResult::Draw | GameResult::ThreeFoldRepetition => {
                 egui::Window::new("result").open(&mut true).show(ctx, |ui| {
                     ui.label("Draw");
                     self.new_game_button(ui, frame);
@@ -825,7 +828,7 @@ pub fn threads(
                     Computer::RandomMaximizeCapture => random_maximize_capture(&mut gamestate),
                     Computer::Minimax(depth) => {
                         println!("color {color:?} depth {}", depth);
-                        minimax(&mut gamestate, depth)
+                        negamax(&mut gamestate, depth)
                     }
                 };
                 println!("doing move");
